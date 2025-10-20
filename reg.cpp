@@ -4,20 +4,23 @@
 #include <iomanip>
 #include <sstream>
 
-#pragma comment(lib, "advapi32.lib")
+#pragma comment(lib, "advapi32.lib") // Для работы с реестром, если нужно линковать явно
 
 using namespace std;
 
 // Чтение строкового значения из реестра
-string ReadRegString(HKEY rootKey, const char* subKey, const char* valueName) {
-    HKEY key;
-    if (RegOpenKeyExA(rootKey, subKey, 0, KEY_READ, &key) != ERROR_SUCCESS) {
+string ReadRegString(HKEY rootKey, const char* subKey, const char* valueName) // Возвращает значение или сообщение об ошибке
+// принимает корневой ключ, путь к подразделу и имя значения
+{
+	HKEY key; // открыает ключ реестра для чтения
+	if (RegOpenKeyExA(rootKey, subKey, 0, KEY_READ, &key) != ERROR_SUCCESS)
+    {
         return "<Ошибка: ключ не найден>";
     }
 
     char buffer[1024];
     DWORD bufferSize = sizeof(buffer);
-    LONG result = RegQueryValueExA(key, valueName, nullptr, nullptr, (LPBYTE)buffer, &bufferSize);
+    LONG result = RegQueryValueExA(key, valueName, nullptr, nullptr, (LPBYTE)buffer, &bufferSize); // для ansi строк 
     RegCloseKey(key);
 
     if (result != ERROR_SUCCESS) {
@@ -27,7 +30,7 @@ string ReadRegString(HKEY rootKey, const char* subKey, const char* valueName) {
     return string(buffer);
 }
 
-// Чтение даты установки ОС (значение InstallDate — Unix timestamp в секундах)
+// Чтение даты установки ОС (значение InstallDate — Unix timestamp в секундах от 1070го)
 string GetInstallDate() {
     HKEY key;
     const char* subKey = "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion";
@@ -55,7 +58,11 @@ string GetInstallDate() {
         return "<Ошибка: преобразование даты не удалось>";
     }
 
-    ostringstream oss;
+	// Форматируем дату в строку, я ваще не понял че как там, в интернете написано что там
+    // чето какието 100 наносекнудные интервалы, там время надо переводить, потому что он прото считает время прошедшее
+	// с таймстомпа 1970 года, а винда с 1601 года, поэтому там такая формула
+
+	ostringstream oss; // используем ostringstream для форматирования строки, преобразуем даты
     oss << setfill('0')
         << st.wYear << "-"
         << setw(2) << st.wMonth << "-"
